@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+# Bring in the full responsitory
+git fetch --unshallow
+
+ # Figure out the version based on tags
+fullversion="$(git describe --tags --always)"
+minorversion="${fullversion%.*}"
+majorversion="${minorversion%.*}"
+for tag in "$fullversion" "$minorversion" "$majorversion"; do
+	docker tag "${IMAGE_NAME}" "${DOCKER_REPO}:$tag"
+	docker push "${DOCKER_REPO}:$tag"
+done

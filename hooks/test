@@ -1,0 +1,14 @@
+#!/bin/bash
+set -ueo pipefail
+
+cd source
+docker build -t "${DOCKER_REPO}:test" --build-arg IMAGE_NAME="${IMAGE_NAME}" .
+cid="$(docker run -p 80 -d --name test "${DOCKER_REPO}:test")"
+trap "docker rm -vf $cid" EXIT
+docker ps -a
+ip="$(docker inspect -f '{{ range .NetworkSettings.Networks }}{{.IPAddress}}{{end}}' "$cid")"
+echo "Test container ip: $ip"
+sleep 2
+(curl -m 2 "http://$ip" || true ) | grep -q "kittn" && exit
+docker logs "$cid"
+exit 1
